@@ -3,7 +3,25 @@ import { useState } from 'react'
 import { CountryBox } from './CountryBox'
 
 export const Results = () => {
-	const [data, setData] = useState([])
+	interface CountryInfo {
+		name: {
+			common: string
+		}
+		capital: [string]
+		flags: {
+			png: string
+		}
+		population: number
+	}
+
+	type FormatedCountryInfoProps = {
+		name: string
+		capital?: [string]
+		flag: string
+		population?: number
+	}
+
+	const [data, setData] = useState<FormatedCountryInfoProps[]>([])
 
 	async function loadCountries() {
 		const search = (
@@ -11,10 +29,22 @@ export const Results = () => {
 		).value
 
 		axios
-			.get(`https://restcountries.com/v3.1/name/${search}`)
+			.get(
+				search.trim()
+					? `https://restcountries.com/v3.1/name/${search}`
+					: 'https://restcountries.com/v3.1/all'
+			)
 			.then((response) => {
-				setData(response.data)
-				console.log(response.data)
+				const data = response.data as [CountryInfo]
+				const formatedData = data.map((country) => {
+					return {
+						name: country.name.common,
+						capital: country?.capital,
+						flag: country.flags.png,
+						population: country?.population,
+					}
+				})
+				setData(formatedData)
 			})
 			.catch((error) => {
 				console.log(error)
@@ -39,9 +69,17 @@ export const Results = () => {
 					}}
 				/>
 			</div>
-			<div className="mt-6 grid grid-cols-2 sm:grid-cols-3 max-w-xl m-auto">
-				{data.map((country) => {
-					return <CountryBox />
+			<div className="mt-6 grid grid-cols-2 sm:grid-cols-3 max-w-xl m-auto gap-y-4">
+				{data.map((country, index) => {
+					return (
+						<CountryBox
+							name={country.name}
+							capital={country.capital}
+							flag={country.flag}
+							population={country.population}
+							key={country.name}
+						/>
+					)
 				})}
 			</div>
 		</div>
